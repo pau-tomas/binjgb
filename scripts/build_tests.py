@@ -26,7 +26,7 @@ WLA_DX_DIR = os.path.join(common.THIRD_PARTY_DIR, 'wla-dx')
 WLA_DX_BUILD_DIR = os.path.join(WLA_DX_DIR, 'build')
 WLA_DX_BIN_DIR = os.path.join(WLA_DX_BUILD_DIR, 'binaries')
 WLA_DX_GIT_REPO = 'https://github.com/vhelin/wla-dx'
-WLA_DX_GIT_SHA = '01f7fd16a111ed2cbb81b4c07ed5e793bff5d6bd'
+WLA_DX_GIT_SHA = '89a90a56be5c2b8cf19a9afa3e1b32384ddb1a97'
 
 
 def Run(exe, *args, **kwargs):
