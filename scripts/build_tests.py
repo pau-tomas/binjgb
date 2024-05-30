@@ -15,12 +15,12 @@ import sys
 import common
 
 MOONEYE_GB_DIR = os.path.join(common.TEST_DIR, 'mooneye-gb')
-MOONEYE_GB_GIT_REPO = 'https://github.com/binji/mooneye-gb-tests'
-MOONEYE_GB_GIT_SHA = 'fbef416596240ddb4347e208dcb81d845ae874ec'
+MOONEYE_GB_GIT_REPO = 'https://github.com/Gekkio/mooneye-test-suite'
+MOONEYE_GB_GIT_SHA = 'b5740e15576e19b5048ca7dc292fb8ff80c590ef'
 
 MOONEYE_GB_WP_DIR = os.path.join(common.TEST_DIR, 'mooneye-gb-wp')
-MOONEYE_GB_WP_GIT_REPO = 'https://github.com/binji/mooneye-gb-tests'
-MOONEYE_GB_WP_GIT_SHA = '862912f5d22bd624ed11fc244000b0a38630c3d4'
+MOONEYE_GB_WP_GIT_REPO = 'https://github.com/Gekkio/mooneye-test-suite'
+MOONEYE_GB_WP_GIT_SHA = 'b5740e15576e19b5048ca7dc292fb8ff80c590ef'
 
 WLA_DX_DIR = os.path.join(common.THIRD_PARTY_DIR, 'wla-dx')
 WLA_DX_BUILD_DIR = os.path.join(WLA_DX_DIR, 'build')
