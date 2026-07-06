@@ -273,7 +273,7 @@ static void end_rewind(void) {
 
 static void printer_done(u32* image, u8 height, u8 top_margin, u8 bottom_margin,
                          u8 exposure) {
-  host_new_printer_window(host, image, height, top_margin, bottom_margin);
+  host_handle_printer_done(host, image, height, top_margin, bottom_margin);
 }
 
 static void toggle_printer(void) {
@@ -281,10 +281,16 @@ static void toggle_printer(void) {
 
   if (current_accessory != ACCESSORY_PRINTER) {
     emulator_set_accessory_printer(e, printer_done);
-    set_status_text("Printer connected %d", emulator_get_accessory(e));
+    set_status_text("Printer connected", emulator_get_accessory(e));
   } else {
     emulator_set_accessory_none(e);
-    set_status_text("Printer disconnected %d", emulator_get_accessory(e));
+    set_status_text("Printer disconnected", emulator_get_accessory(e));
+  }
+}
+
+static void save_print(void) {
+  if (host_handle_save_print(host)) {
+    set_status_text("Printed to printer.bmp");
   }
 }
 
@@ -309,6 +315,7 @@ static void key_down(HostHookContext* ctx, HostKeycode code) {
     case HOST_KEYCODE_LEFTBRACKET: inc_palette(-1); break;
     case HOST_KEYCODE_RIGHTBRACKET: inc_palette(1); break;
     case HOST_KEYCODE_P: toggle_printer(); break;
+    case HOST_KEYCODE_S: save_print(); break;
     default: break;
   }
 }
