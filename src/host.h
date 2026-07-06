@@ -188,7 +188,8 @@ void host_upload_texture(struct Host*, HostTexture*, int w, int h,
                          const void* data);
 void host_destroy_texture(struct Host*, HostTexture*);
 
-void host_new_printer_window(struct Host* host, u32 * image, u8 height, u8 top_margin, u8 bottom_margin);
+void host_handle_printer_done(struct Host* host, u32 * image, u8 height, u8 top_margin, u8 bottom_margin);
+Bool host_handle_save_print(struct Host* host);
 void host_destroy_printer_window(struct Host* host);
 
 #ifdef __cplusplus
