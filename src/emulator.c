@@ -5209,6 +5209,10 @@ void emulator_set_accessory_none(Emulator* e) {
 void emulator_set_accessory_printer(Emulator* e, PrinterDoneCallback cb) {
   e->accessory = ACCESSORY_PRINTER;
   e->printer_done_cb = cb;
+
+  Printer *p = &e->state.printer;
+  p->current_state = PRINTER_STATE_MAGIC1;
+  p->status = PRINTER_STATUS_NONE;
 }
 
 Accessory emulator_get_accessory(Emulator* e) {
