@@ -358,8 +358,7 @@ typedef enum {
   PRINTER_STATE_COMPRESSION,
   PRINTER_STATE_LENGTH,
   PRINTER_STATE_DATA,
-  PRINTER_STATE_CHECKSUM_LOW,
-  PRINTER_STATE_CHECKSUM_HIGH,
+  PRINTER_STATE_CHECKSUM,
   PRINTER_STATE_KEEPALIVE,
   PRINTER_STATE_STATUS,
 } PrinterState;
@@ -481,7 +480,7 @@ typedef struct {
   u16 checksum;
   u8 byte_to_send;
   u16 current_data_length;
-  u8 length_bytes_received;
+  u8 field_bytes_received;
   u8 dot_data[PRINTER_MAX_DATA_LENGTH * 10];
   u16 dot_data_length;
   u8 bits_received;
@@ -4203,6 +4202,7 @@ static void handle_printer_byte(Emulator* e, u8 value) {
         p->status &= ~PRINTER_STATUS_CHECKSUM_ERROR;
         p->checksum = 0;
         p->current_state = PRINTER_STATE_MAGIC2;
+        p->field_bytes_received = 0;
       }
       break;
 
@@ -4227,16 +4227,16 @@ static void handle_printer_byte(Emulator* e, u8 value) {
       break;
 
     case PRINTER_STATE_LENGTH:
-      if (p->length_bytes_received == 0) {
-        p->length_bytes_received = 1;
+      if (p->field_bytes_received == 0) {
+        p->field_bytes_received = 1;
         p->data_length = value;
         p->checksum += value;
       } else {
-        p->length_bytes_received = 0;
+        p->field_bytes_received = 0;
         p->data_length |= (value & 3) << 8;
         p->checksum += value;
         if (p->data_length == 0) {
-          p->current_state = PRINTER_STATE_CHECKSUM_LOW;
+          p->current_state = PRINTER_STATE_CHECKSUM;
         } else {
           p->current_data_length = 0;
           p->current_state = PRINTER_STATE_DATA;
@@ -4250,30 +4250,31 @@ static void handle_printer_byte(Emulator* e, u8 value) {
         p->checksum += value;
       }
       if (p->data_length == p->current_data_length) {
-        p->current_state = PRINTER_STATE_CHECKSUM_LOW;
+        p->current_state = PRINTER_STATE_CHECKSUM;
       }
       break;
 
-    case PRINTER_STATE_CHECKSUM_LOW:
-      p->checksum ^= value;
-      p->current_state = PRINTER_STATE_CHECKSUM_HIGH;
-      break;
-
-    case PRINTER_STATE_CHECKSUM_HIGH:
-      p->checksum ^= value << 8;
-      if (p->checksum) {  // Checksum error
-        p->status |= PRINTER_STATUS_CHECKSUM_ERROR;
-        p->current_state = PRINTER_STATE_MAGIC1;
+    case PRINTER_STATE_CHECKSUM:
+      if (p->field_bytes_received == 0) {
+        p->checksum ^= value;
+        p->field_bytes_received = 1;
       } else {
-        p->status &= ~PRINTER_STATUS_CHECKSUM_ERROR;
+        p->checksum ^= (u16)value << 8;
+        p->field_bytes_received = 0;
+
+        if (p->checksum) {
+          p->status |= PRINTER_STATUS_CHECKSUM_ERROR;
+        } else {
+          p->status &= ~PRINTER_STATUS_CHECKSUM_ERROR;
+        }
+        p->byte_to_send = 0x81;
+        p->current_state = PRINTER_STATE_KEEPALIVE;
       }
-      p->byte_to_send = 0x81;
-      p->current_state = PRINTER_STATE_KEEPALIVE;
       break;
 
     case PRINTER_STATE_KEEPALIVE:
       if (value == 0) {
-        if ((p->command) == PRINTER_INIT_COMMAND) {
+        if (p->checksum == 0 && p->command == PRINTER_INIT_COMMAND) {
           p->byte_to_send = PRINTER_STATUS_NONE;
         } else {
           if (p->status == (PRINTER_STATUS_BUSY | PRINTER_STATUS_DATA_FULL) &&
@@ -4287,7 +4288,9 @@ static void handle_printer_byte(Emulator* e, u8 value) {
       break;
 
     case PRINTER_STATE_STATUS:
-      handle_printer_command(e);
+      if (value == 0 && p->checksum == 0) {
+        handle_printer_command(e);
+      }
       p->current_state = PRINTER_STATE_MAGIC1;
       break;
   }
@@ -4296,7 +4299,7 @@ static void handle_printer_byte(Emulator* e, u8 value) {
 static u8 handle_serial_accessory_bit(Emulator *e, u8 recv_bit) {
   if (e->accessory == ACCESSORY_NONE) return 0;
   assert(e->accessory == ACCESSORY_PRINTER);
-  Printer* p = &e->state.printer;
+  Printer *p = &e->state.printer;
   u8 bit_to_send = (p->byte_to_send & 0x80) >> 7;
   p->byte_to_send <<= 1;
   p->byte_being_received <<= 1;
