@@ -64,5 +64,7 @@
 "_set_joyp_start",
 "_set_joyp_up",
 "_set_log_apu_writes",
-"_state_file_data_new"
+"_state_file_data_new",
+"_emulator_set_accessory_none",
+"_emulator_set_accessory_printer"
 ]

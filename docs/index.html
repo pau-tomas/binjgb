@@ -22,7 +22,7 @@
     .main.ready {
       display: grid;
     }
-    canvas {
+    .canvas {
       width: 480px;
       height: 432px;
       /* Make sure border doesn't shrink the content size, since we want the
@@ -41,6 +41,15 @@
       grid-row: 1 / 2;
       overflow: auto;
       transition: width .2s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      width: 200px;
+      padding: 0 8px;
+    }
+    .sidebar canvas {
+      width: 160px;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
     }
     .overlap {
       position: absolute;
@@ -125,6 +134,9 @@
     .top-line {
       border-top: 1px solid gray;
     }
+    .left-line {
+      border-left: 1px solid gray;
+    }
     #volume {
       height: 1em;
       width: 75px;
@@ -163,11 +175,13 @@
   <script src="idb.min.js"></script>
   <div class="main">
     <canvas
+      class="canvas"
        v-bind:width="canvasWidth" v-bind:height="canvasHeight"
        v-show="canvas.show"
        v-bind:style="{width:canvasWidthPx, height:canvasHeightPx}">
     </canvas>
-    <div class="sidebar" hidden>
+    <div class="sidebar left-line" v-if="printerEnabled">
+      Printer Output
     </div>
     <div class="files overlap" v-if="files.show">
       <div class="files-header">Files</div>
@@ -254,6 +268,9 @@
           <button
               v-show="loaded"
               @click="toggleRecordVGM">{{vgmLabel}}</button>
+          <input id="printerEnabled" v-if="loaded" type="checkbox"
+            v-model:checked="printerEnabled" @click="togglePrinter"></input>
+            <label v-if="loaded" for="printerEnabled">printer</label>
         </div>
         <div class="right">
           <span>{{fps.toFixed(1)}}</span> FPS

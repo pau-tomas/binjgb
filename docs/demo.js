@@ -79,6 +79,7 @@ let data = {
   colorOptions: false,
   needsReload: false,
   recordingVGM: false,
+  printerEnabled: false,
 };
 
 let vm = new Vue({
@@ -171,6 +172,14 @@ let vm = new Vue({
       if (pal >= BUILTIN_PALETTES) { pal = 0; }
       this.pal = pal;
       if (emulator) { emulator.setBuiltinPalette(this.pal); }
+    },
+    togglePrinter: function() {
+      if (!emulator) return;
+      if (!vm.printerEnabled) {
+        emulator.printer.enablePrinter();
+      } else {
+        emulator.printer.disablePrinter();
+      }
     },
     setCgbColorCurve: function() {
       this.needsReload = true;
@@ -400,6 +409,7 @@ class Emulator {
     this.audio = new Audio(module, this.e);
     this.video = new Video(module, this.e, $('canvas'));
     this.rewind = new Rewind(module, this.e);
+    this.printer = new Printer(module, this.e);
     this.rewindIntervalId = 0;
     this.vgmWriter = new VGMWriter(module, this.e);
 
@@ -1259,5 +1269,46 @@ class VGMWriter {
     }
     data[offset++] = 0x66; // End of data stream command.
     return buffer;
+  }
+}
+
+class Printer {
+  constructor(module, e, el) {
+    this.module = module;
+    this.e = e;
+
+    this.callbackPtr = this.module.addFunction(
+      (pixelsPtr, height, topMargin, bottomMargin, exposure) => {
+        if (height === 0) return;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = SCREEN_WIDTH;
+        canvas.height = height + topMargin + bottomMargin;
+        canvas.style.height = `${height + topMargin + bottomMargin}px`;
+        
+        const ctx = canvas.getContext('2d');
+        const imgData = ctx.createImageData(SCREEN_WIDTH, height);
+        const buffer = makeWasmBuffer(
+          this.module, pixelsPtr, SCREEN_WIDTH * height * 4);
+        imgData.data.set(buffer); 
+        ctx.putImageData(imgData, 0, topMargin);
+
+        $(".sidebar").appendChild(canvas);
+      },
+      'viiiii'
+    );
+  }
+
+  destroy() {
+   this.disablePrinter();
+   this.module.removeFunction(this.callbackPtr);
+  }
+
+  enablePrinter() {
+    this.module._emulator_set_accessory_printer(this.e, this.callbackPtr);
+  }
+
+  disablePrinter() {
+    this.module._emulator_set_accessory_none(this.e);
   }
 }

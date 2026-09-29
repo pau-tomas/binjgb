@@ -4117,7 +4117,7 @@ static void handle_printer_command(Emulator* e) {
         int tile_rows = tile_count / 20;
         p->print_done_ticks =
             SERIAL.sync_ticks + tile_rows * CPU_TICKS_PER_SECOND / 8;
-        u32 buffer[160 * 144];
+        u32* buffer = xmalloc(160 * 144 * sizeof(*buffer));
         for (int ty = 0; ty < tile_rows; ty++) {
           for (int tx = 0; tx < 20; tx++) {
             int tile = tx + ty * 20;
@@ -4139,6 +4139,7 @@ static void handle_printer_command(Emulator* e) {
           e->printer_done_cb(buffer, tile_rows * 8, p->data[1] >> 4,
                              p->data[1] & 7, p->data[3] & 0x7F);
         }
+        xfree(buffer);
         p->dot_data_length = 0;
       }
       break;
